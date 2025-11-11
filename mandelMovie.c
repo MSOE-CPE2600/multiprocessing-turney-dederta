@@ -33,12 +33,12 @@
 
 int main(int argc, char *argv[])
 {
-    int numChildren = 1;
-    int numFrames = 10;
-    double xcenter = 0.0;
-    double ycenter = 0.0;
-    double scale = 4.0;
-    double zoomFactor = 0.9;
+    int numChildren = 1;        // number of processes
+    int numFrames = 10;         // number of frames to generate
+    double xcenter = 0.0;       // x image center
+    double ycenter = 0.0;       // y image center
+    double scale = 4.0;         // starting scale
+    double zoomFactor = 0.9;    // zoom multiplier
 
     char *outFilePrefix = "mandel";
 

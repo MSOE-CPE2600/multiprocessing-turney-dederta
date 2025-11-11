@@ -40,10 +40,13 @@ Once the frames are generated, combine them using FFmpeg
 `./mandelMovie -p 8 -f 80 -x -0.75 -y 0.1 -s 0.25 -z 0.96 -o migraine`
 `./mandelMovie -p 50 -f 175 -x 0.00164365 -y -0.822467633 -s 0.9 -z 0.93 -o doublespiral`
 
+#### Double Spiral Movie
+![Double Spiral](doublespiral.mp4)
 
 ## Benchmarking
 
 Adding more processors sped up the program significantly until it maxed out around 12. The tests were done generating 20 frames.
 ![Benchmarking graph](Performance.png)
-![video](doublespiral.mp4)
+
+
 

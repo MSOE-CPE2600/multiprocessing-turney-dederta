@@ -1,21 +1,40 @@
-CC=gcc
-CFLAGS=-c -Wall -g
-LDFLAGS=-ljpeg
-SOURCES= mandel.c jpegrw.c 
-OBJECTS=$(SOURCES:.c=.o)
-EXECUTABLE=mandel
+# === Compiler and Flags ===
+CC = gcc
+CFLAGS = -Wall -g -c
+LDFLAGS = -ljpeg -lm
 
-all: $(SOURCES) $(EXECUTABLE) 
+# === Executables ===
+MANDEL_EXE = mandel
+MOVIE_EXE = mandelMovie
 
-# pull in dependency info for *existing* .o files
--include $(OBJECTS:.o=.d)
+# === Source Files ===
+MANDEL_SRC = mandel.c jpegrw.c
+MOVIE_SRC  = mandelMovie.c
 
-$(EXECUTABLE): $(OBJECTS)
-	$(CC) $(OBJECTS) $(LDFLAGS) -o $@
+# === Object Files ===
+MANDEL_OBJ = $(MANDEL_SRC:.c=.o)
+MOVIE_OBJ  = $(MOVIE_SRC:.c=.o)
 
-.c.o: 
+# === Default Target ===
+all: $(MANDEL_EXE) $(MOVIE_EXE)
+
+# === Dependency Tracking ===
+-include $(MANDEL_OBJ:.o=.d)
+-include $(MOVIE_OBJ:.o=.d)
+
+# === Build mandel ===
+$(MANDEL_EXE): $(MANDEL_OBJ)
+	$(CC) $(MANDEL_OBJ) $(LDFLAGS) -o $@
+
+# === Build mandelMovie ===
+$(MOVIE_EXE): $(MOVIE_OBJ)
+	$(CC) $(MOVIE_OBJ) $(LDFLAGS) -o $@
+
+# === Generic Compile Rule ===
+%.o: %.c
 	$(CC) $(CFLAGS) $< -o $@
 	$(CC) -MM $< > $*.d
 
+# === Clean Everything ===
 clean:
-	rm -rf $(OBJECTS) $(EXECUTABLE) *.d
+	rm -rf $(MANDEL_OBJ) $(MOVIE_OBJ) $(MANDEL_EXE) $(MOVIE_EXE) *.d *.jpg

@@ -15,8 +15,9 @@ to compile everything run `make`
 ### Generate one image
 `./mandel -x 0 -y 0 -s 4 -o test.jpg
 This creates `test.jpg` centered at (0, 0) with scale 4.
+
 ### Generate a movie sequence
-`./mandelMovie -p 12 -f 80 -x 0.75 -y 0.1 -s 0.25 -z 0.96 -o seahorse`
+`./mandelMovie -p 12 -f 80 -x 0.75 -y 0.1 -s 0.25 -z 0.96 -o movie`
 - `-p <numChildren>` Number of simutaneous processes. Default 1
 - `-f <numFrames>` Number of total frames. Default 10
 - `-x <xCenter>` X center coordinate. Default 0.0
@@ -29,12 +30,17 @@ For example: `./mandelMovie -p 4 -f 50 -x -0.761574 -y -0.0847596 -s 0.05 -z 0.9
 
 ### Creating the movie
 Once the frames are generated, combine them using FFmpeg
-`ffmpeg -framerate 24 -i seahorse%d.jpg -pix_fmt yuv420p seahorse.mp4`
+`ffmpeg -framerate 24 -i movie%d.jpg -pix_fmt yuv420p movie.mp4`
 - `-framerate 24` Plays at 24 frames per second
-- `-i seahorse%d.jpg` Uses sequential files (seahorse0.jpg, seahorse1.jpg, etc)
+- `-i movie%d.jpg` Uses sequential files (movie0.jpg, movie1.jpg, etc)
 - `-pix_fmt yuv420p` Ensures compatibility with most players
-- `seahorse.mp4` Output video file
+- `movie.mp4` Output video file
 
 ### Cool Videos to Try
-`./mandelMovie -p 8 -f 80 -x -0.75 -y 0.1 -s 0.25 -z 0.96 -o seahorse`
+`./mandelMovie -p 8 -f 80 -x -0.75 -y 0.1 -s 0.25 -z 0.96 -o migraine`
 `./mandelMovie -p 8 -f 120 -x 0.001643722 -y -0.822467633 -s 0.001 -z 0.97 -o doublespiral`
+
+## Benchmarking
+
+Adding more processors sped up the program significantly until it maxed out around 12. The tests were done generating 20 frames.
+![Benchmarking graph](Performance.png)

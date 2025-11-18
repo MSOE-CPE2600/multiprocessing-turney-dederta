@@ -26,8 +26,13 @@ This creates `test.jpg` centered at (0, 0) with scale 4.
 - `-s <scale>` Starting zoom scale. Default 4.0
 - `-z <zoomFactor>` Zoom multiplier per frame. Default 0.9
 - `-o <prefix>` Output filename prefix. Default mandel
+- `-t <threads>` Number of threads to use. Default 1
 
-For example: `./mandelMovie -p 4 -f 50 -x -0.761574 -y -0.0847596 -s 0.05 -z 0.96 -o spiral` creates frames `spiral0.jpg, spiral1.jpg, spiral2.jpg, ...`
+For example: `./mandelMovie -p 4 -f 50 -t 4 -x -0.761574 -y -0.0847596 -s 0.05 -z 0.96 -o spiral` 
+
+creates frames `spiral0.jpg, spiral1.jpg, spiral2.jpg, ...`
+
+using 4 processors and 4 threads.
 
 ### Creating the movie
 Once the frames are generated, combine them using FFmpeg
@@ -38,8 +43,8 @@ Once the frames are generated, combine them using FFmpeg
 - `movie.mp4` Output video file
 
 ### Cool Videos to Try
-`./mandelMovie -p 8 -f 80 -x -0.75 -y 0.1 -s 0.25 -z 0.96 -o migraine`
-`./mandelMovie -p 50 -f 175 -x 0.00164365 -y -0.822467633 -s 0.9 -z 0.93 -o doublespiral`
+`./mandelMovie -p 8 -f 80 -t 12 -x -0.75 -y 0.1 -s 0.25 -z 0.96 -o migraine`
+`./mandelMovie -p 50 -f 175 -t 12 -x 0.00164365 -y -0.822467633 -s 0.9 -z 0.93 -o doublespiral`
 
 #### Double Spiral Movie
 ![Double Spiral](doublespiral.mp4)
@@ -50,4 +55,6 @@ Adding more processors sped up the program significantly until it maxed out arou
 ![Benchmarking graph](Performance.png)
 
 
-
+When using variable processors and threads, increasing processors had the same affect of significantly speeding up the program, while threads had a much smaller affect only slightly increasing the speed. At around 12 processors the CPU maxed out, meaning the device was at capacity and nothing more could be done to help speed up the program. The significant noise in the graph is likely due to other processes running on the computer at the same time. Data from 1, 2, and 4 processors were no included on the graph in order to keep the scale smaller for more visable data.
+![Benchmarking graph](ThreadsBenchmarking.png)
+![Benchmarking data](threadsBenchmarkingData.png)

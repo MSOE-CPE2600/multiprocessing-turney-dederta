@@ -13,9 +13,10 @@
  * -s scale          : initial scale (default 4.0)
  * -z zoomFactor     : zoom factor per frame (default 0.9)
  * -o outFilePrefix  : output file prefix (default "mandel")
+ * -t numThreads     : number of threads to use in mandel (default 1)
  * 
  * Example usage:
- *   ./mandelMovie -p 12 -f 20 -x -0.7 -y 0.0 -s 3.0 -z 0.8 -o mandelZoom
+ *   ./mandelMovie -p 12 -f 20 -t 12 -x -0.7 -y 0.0 -s 3.0 -z 0.8 -o mandelZoom
  * 
  * Each frame is saved as a .jpeg file which can be combined using
  *   ffmpeg -framerate 24 -i mandel%d.jpg -pix_fmt yuv420p mandel.mp4
@@ -39,12 +40,13 @@ int main(int argc, char *argv[])
     double ycenter = 0.0;       // y image center
     double scale = 4.0;         // starting scale
     double zoomFactor = 0.9;    // zoom multiplier
+    int numThreads = 1;         // default number of threads
 
     char *outFilePrefix = "mandel";
 
     int opt;
 
-    while ((opt = getopt(argc, argv, "p:f:x:y:s:z:o:h")) != -1)
+    while ((opt = getopt(argc, argv, "p:f:x:y:s:z:o:t:h")) != -1)
     {
         switch (opt)
         {
@@ -79,13 +81,23 @@ int main(int argc, char *argv[])
                 printf("  -s <scale>         Starting scale or zoom width (default 4.0)\n");
                 printf("  -z <zoomFactor>    Zoom multiplier per frame (default 0.9)\n");
                 printf("  -o <prefix>        Output filename prefix (default \"mandel\")\n");
+                printf("  -t <numThreads>    Number of threads to use in mandel (default 1)\n");
                 exit(0);
+            case 't':
+                numThreads = atoi(optarg);
+                if (numThreads < 1){
+                    numThreads = 1;
+                }
+                if (numThreads > 20){
+                    numThreads = 20;
+                }
+                break;
             default:
                 fprintf(stderr, "Use -h for help\n");
                 exit(1);
         }
     }
-    printf("Running mandelMovie with %d children and %d frames\n", numChildren, numFrames);
+    printf("Running mandelMovie with %d children, %d threads, and %d frames\n", numChildren, numThreads, numFrames);
 
     int active = 0;
 
@@ -106,13 +118,14 @@ int main(int argc, char *argv[])
         if (pid == 0)
         {
             // Child process
-            char xstr[32], ystr[32], sstr[32], ostr[64];
+            char xstr[32], ystr[32], sstr[32], ostr[64], tstr[64];
             snprintf(xstr, sizeof(xstr), "%lf", xcenter);
             snprintf(ystr, sizeof(ystr), "%lf", ycenter);
             snprintf(sstr, sizeof(sstr), "%lf", frameScale);
             snprintf(ostr, sizeof(ostr), "%s", filename);
-
-            execlp("./mandel", "mandel", "-x", xstr, "-y", ystr, "-s", sstr, "-o", ostr, (char *)NULL);
+            snprintf(tstr, sizeof(tstr), "%d", numThreads);
+            
+            execlp("./mandel", "mandel", "-x", xstr, "-y", ystr, "-s", sstr, "-o", ostr, "-t", tstr, (char *)NULL);
             perror("execlp failed");
             exit(1);
         }

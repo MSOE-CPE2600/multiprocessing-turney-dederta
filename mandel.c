@@ -4,20 +4,33 @@
 //  https://users.cs.fiu.edu/~cpoellab/teaching/cop4610_fall22/project3.html
 //
 //  Converted to use jpg instead of BMP and other minor changes
-//  
+//  Modified by: Ashlyn DedertSS
 ///
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
 #include "jpegrw.h"
+#include <pthread.h>
+
+// struct for passing arguments to threads
+typedef struct {
+	imgRawImage* img;
+	double xmin;
+	double xmax;
+	double ymin;
+	double ymax;
+	int max;
+	int start_row;
+	int end_row;
+} thread_args_t;
 
 // local routines
 static int iteration_to_color( int i, int max );
 static int iterations_at_point( double x, double y, int max );
 static void compute_image( imgRawImage *img, double xmin, double xmax,
-									double ymin, double ymax, int max );
+									double ymin, double ymax, int max, int num_threads );
 static void show_help();
-
+void *computeRegion(void *arg);
 
 int main( int argc, char *argv[] )
 {
@@ -33,11 +46,12 @@ int main( int argc, char *argv[] )
 	int    image_width = 1000;
 	int    image_height = 1000;
 	int    max = 1000;
+	int num_threads = 1; // default
 
 	// For each command line argument given,
 	// override the appropriate configuration value.
 
-	while((c = getopt(argc,argv,"x:y:s:W:H:m:o:h"))!=-1) {
+	while((c = getopt(argc,argv,"x:y:s:W:H:m:o:t:h"))!=-1) {
 		switch(c) 
 		{
 			case 'x':
@@ -65,6 +79,15 @@ int main( int argc, char *argv[] )
 				show_help();
 				exit(1);
 				break;
+			case 't':
+				num_threads = atoi(optarg);
+				if (num_threads < 1){
+					num_threads = 1;
+				}
+				if (num_threads > 20){
+					num_threads = 20;
+				}
+				break;
 		}
 	}
 
@@ -81,7 +104,14 @@ int main( int argc, char *argv[] )
 	setImageCOLOR(img,0);
 
 	// Compute the Mandelbrot image
-	compute_image(img,xcenter-xscale/2,xcenter+xscale/2,ycenter-yscale/2,ycenter+yscale/2,max);
+	compute_image(
+		img,
+		xcenter-xscale/2,
+		xcenter+xscale/2,
+		ycenter-yscale/2,
+		ycenter+yscale/2,
+		max, 
+		num_threads);
 
 	// Save the image in the stated file.
 	storeJpegImageFile(img,outfile);
@@ -91,8 +121,6 @@ int main( int argc, char *argv[] )
 
 	return 0;
 }
-
-
 
 
 /*
@@ -126,29 +154,27 @@ Compute an entire Mandelbrot image, writing each point to the given bitmap.
 Scale the image to the range (xmin-xmax,ymin-ymax), limiting iterations to "max"
 */
 
-void compute_image(imgRawImage* img, double xmin, double xmax, double ymin, double ymax, int max )
+void compute_image(imgRawImage* img, double xmin, double xmax, double ymin, double ymax, int max, int num_threads)
 {
-	int i,j;
-
-	int width = img->width;
+	pthread_t threads[num_threads];
+	thread_args_t args[num_threads];
 	int height = img->height;
+	int rows_per_thread = height / num_threads;
 
-	// For every pixel in the image...
+	for (int i = 0; i < num_threads; i++){
+		args[i].img = img;
+		args[i].xmin = xmin;
+		args[i].xmax = xmax;
+		args[i].ymin = ymin;
+		args[i].ymax = ymax;
+		args[i].max = max;
+		args[i].start_row = i * rows_per_thread;
+		args[i].end_row = (i == num_threads - 1) ? height : (i + 1) * rows_per_thread;
 
-	for(j=0;j<height;j++) {
-
-		for(i=0;i<width;i++) {
-
-			// Determine the point in x,y space for that pixel.
-			double x = xmin + i*(xmax-xmin)/width;
-			double y = ymin + j*(ymax-ymin)/height;
-
-			// Compute the iterations at that point.
-			int iters = iterations_at_point(x,y,max);
-
-			// Set the pixel in the bitmap.
-			setPixelCOLOR(img,i,j,iteration_to_color(iters,max));
-		}
+		pthread_create(&threads[i], NULL, computeRegion, &args[i]);
+	}
+	for (int i = 0; i < num_threads; i++){
+		pthread_join(threads[i], NULL);
 	}
 }
 
@@ -176,10 +202,27 @@ void show_help()
 	printf("-s <scale>  Scale of the image in Mandlebrot coordinates (X-axis). (default=4)\n");
 	printf("-W <pixels> Width of the image in pixels. (default=1000)\n");
 	printf("-H <pixels> Height of the image in pixels. (default=1000)\n");
-	printf("-o <file>   Set output file. (default=mandel.bmp)\n");
+	printf("-o <file>   Set output file. (default=mandel.jpg)\n");
+	printf("-t <threads> Number of threads to use. (default=1)\n");
 	printf("-h          Show this help text.\n");
 	printf("\nSome examples are:\n");
 	printf("mandel -x -0.5 -y -0.5 -s 0.2\n");
 	printf("mandel -x -.38 -y -.665 -s .05 -m 100\n");
 	printf("mandel -x 0.286932 -y 0.014287 -s .0005 -m 1000\n\n");
+}
+
+void *computeRegion(void *arg){
+	thread_args_t *args = (thread_args_t*) arg;
+	int width = args->img->width;
+	int height = args->img->height;
+
+	for (int j = args->start_row; j < args-> end_row; j++){
+		for (int i = 0; i < width; i++){
+			double x = args->xmin + i*(args->xmax - args->xmin)/width;
+			double y = args->ymin + j*(args->ymax - args->ymin)/height;
+			int iters = iterations_at_point(x, y, args->max);
+			setPixelCOLOR(args->img, i, j, iteration_to_color(iters,args->max));
+		}
+	}
+	return NULL;
 }

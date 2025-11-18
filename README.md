@@ -13,7 +13,8 @@ to compile everything run `make`
 
 ## Running
 ### Generate one image
-`./mandel -x 0 -y 0 -s 4 -o test.jpg
+`./mandel -x 0 -y 0 -s 4 -o test.jpg` 
+
 This creates `test.jpg` centered at (0, 0) with scale 4.
 
 ### Generate a movie sequence

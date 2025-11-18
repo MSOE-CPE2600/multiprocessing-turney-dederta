@@ -15,7 +15,7 @@
  * -o outFilePrefix  : output file prefix (default "mandel")
  * 
  * Example usage:
- *   ./mandelMovie -p 4 -f 20 -x -0.7 -y 0.0 -s 3.0 -z 0.8 -o mandelZoom
+ *   ./mandelMovie -p 12 -f 20 -x -0.7 -y 0.0 -s 3.0 -z 0.8 -o mandelZoom
  * 
  * Each frame is saved as a .jpeg file which can be combined using
  *   ffmpeg -framerate 24 -i mandel%d.jpg -pix_fmt yuv420p mandel.mp4

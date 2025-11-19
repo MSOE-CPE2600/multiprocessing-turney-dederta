@@ -6,7 +6,7 @@ This program generates Mandelbrot images and combines them into a smooth zoom an
 ### Files
 `jpegrw.c` Handles reading and writing JPEG files 
 `mandel.c` Generates a single image at a given position, zoom, and resolution.
-`mandelMovie.c` Creates multiple image frames by repeatedly running mandel with different zoom levels. It uses multiprocessing to render several frames in parallel.
+`mandelMovie.c` Creates multiple image frames by repeatedly running mandel with different zoom levels. It uses multiprocessing to render several frames in parallel and multithreading within each mandel process.
 
 ## Compilation
 to compile everything run `make`
@@ -18,7 +18,7 @@ to compile everything run `make`
 This creates `test.jpg` centered at (0, 0) with scale 4.
 
 ### Generate a movie sequence
-`./mandelMovie -p 12 -f 80 -x 0.75 -y 0.1 -s 0.25 -z 0.96 -o movie`
+`./mandelMovie -p 12 -t 8 -f 80 -x 0.75 -y 0.1 -s 0.25 -z 0.96 -o movie`
 - `-p <numChildren>` Number of simutaneous processes. Default 1
 - `-f <numFrames>` Number of total frames. Default 10
 - `-x <xCenter>` X center coordinate. Default 0.0
@@ -28,11 +28,10 @@ This creates `test.jpg` centered at (0, 0) with scale 4.
 - `-o <prefix>` Output filename prefix. Default mandel
 - `-t <threads>` Number of threads to use. Default 1
 
-For example: `./mandelMovie -p 4 -f 50 -t 4 -x -0.761574 -y -0.0847596 -s 0.05 -z 0.96 -o spiral` 
+For example: `./mandelMovie -p 8 -f 50 -t 8 -x -0.761574 -y -0.0847596 -s 0.05 -z 0.96 -o spiral` 
 
-creates frames `spiral0.jpg, spiral1.jpg, spiral2.jpg, ...`
+creates frames `spiral0.jpg, spiral1.jpg, spiral2.jpg, ...` using 8 processors and 8 threads.
 
-using 4 processors and 4 threads.
 
 ### Creating the movie
 Once the frames are generated, combine them using FFmpeg
@@ -44,17 +43,20 @@ Once the frames are generated, combine them using FFmpeg
 
 ### Cool Videos to Try
 `./mandelMovie -p 8 -f 80 -t 12 -x -0.75 -y 0.1 -s 0.25 -z 0.96 -o migraine`
-`./mandelMovie -p 50 -f 175 -t 12 -x 0.00164365 -y -0.822467633 -s 0.9 -z 0.93 -o doublespiral`
+`./mandelMovie -p 8 -f 175 -t 12 -x 0.00164365 -y -0.822467633 -s 0.9 -z 0.93 -o doublespiral`
 
 #### Double Spiral Movie
 ![Double Spiral](doublespiral.mp4)
 
-## Benchmarking
+## Processors Benchmarking
 
 Adding more processors sped up the program significantly until it maxed out around 12. The tests were done generating 20 frames.
 ![Benchmarking graph](Performance.png)
 
 
-When using variable processors and threads, increasing processors had the same affect of significantly speeding up the program, while threads had a much smaller affect only slightly increasing the speed. At around 12 processors the CPU maxed out, meaning the device was at capacity and nothing more could be done to help speed up the program. The significant noise in the graph is likely due to other processes running on the computer at the same time. Data from 1, 2, and 4 processors were no included on the graph in order to keep the scale smaller for more visable data.
+## Thread Benchmarking
+Threads were added to speed up each mandel process by dividing the image into horizontal strips and assigning each strip to a different thread.
+
+Using more threads sped up the process, but not as significantly as adding more processors. The tests were done generating 50 frames. The best performance was around 8 processors and 8+ threads.
 ![Benchmarking graph](ThreadsBenchmarking.png)
 ![Benchmarking data](threadsBenchmarkingData.png)

@@ -4,7 +4,7 @@
 //  https://users.cs.fiu.edu/~cpoellab/teaching/cop4610_fall22/project3.html
 //
 //  Converted to use jpg instead of BMP and other minor changes
-//  Modified by: Ashlyn DedertSS
+//  Modified by: Ashlyn Dedert
 ///
 #include <stdlib.h>
 #include <stdio.h>
@@ -150,17 +150,18 @@ int iterations_at_point( double x, double y, int max )
 }
 
 /*
-Compute an entire Mandelbrot image, writing each point to the given bitmap.
-Scale the image to the range (xmin-xmax,ymin-ymax), limiting iterations to "max"
+ Compute an entire Mandelbrot image, using num_threads threads.
+ Each thread computes a horizontal strip of the image.
 */
-
 void compute_image(imgRawImage* img, double xmin, double xmax, double ymin, double ymax, int max, int num_threads)
 {
+	// create threads and args
 	pthread_t threads[num_threads];
 	thread_args_t args[num_threads];
 	int height = img->height;
 	int rows_per_thread = height / num_threads;
 
+	// launch threads
 	for (int i = 0; i < num_threads; i++){
 		args[i].img = img;
 		args[i].xmin = xmin;
@@ -173,6 +174,7 @@ void compute_image(imgRawImage* img, double xmin, double xmax, double ymin, doub
 
 		pthread_create(&threads[i], NULL, computeRegion, &args[i]);
 	}
+	// join threads
 	for (int i = 0; i < num_threads; i++){
 		pthread_join(threads[i], NULL);
 	}
@@ -211,11 +213,15 @@ void show_help()
 	printf("mandel -x 0.286932 -y 0.014287 -s .0005 -m 1000\n\n");
 }
 
+/* 
+Compute a region of the Mandelbrot set in a thread.
+*/
 void *computeRegion(void *arg){
 	thread_args_t *args = (thread_args_t*) arg;
 	int width = args->img->width;
 	int height = args->img->height;
 
+	// compute assigned rows
 	for (int j = args->start_row; j < args-> end_row; j++){
 		for (int i = 0; i < width; i++){
 			double x = args->xmin + i*(args->xmax - args->xmin)/width;
